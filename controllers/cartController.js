@@ -1,13 +1,14 @@
 const Cart = require("../models/Cart");
 const catchAsync = require("../utils/catchAsync");
+const { PAID, PENDING } = require('../constants/cart');
 
 exports.addProductToShoppingCart = catchAsync( async (req, res, nex) => {
     const { products } = req.body;
     const user = req.user;
-    const status = 'PENDING';
+    const status = PENDING;
 
     // Validate if we have a shopping cart in PENDING state take one
-    const shoppingCartPending = await Cart.findOne({ status: 'PENDING' });
+    const shoppingCartPending = await Cart.findOne({ status: PENDING });
   
     if (shoppingCartPending) {
         const newProducts = [ ...shoppingCartPending.products, ...products ];
@@ -31,6 +32,7 @@ exports.addProductToShoppingCart = catchAsync( async (req, res, nex) => {
         // In the case if we don't have a shopping cart we create a new one
         const newShoppingCart = {
             user: {
+                _id: user._id,
                 userName: user.userName,
                 email: user.email
             },
@@ -51,10 +53,10 @@ exports.addProductToShoppingCart = catchAsync( async (req, res, nex) => {
 exports.payShoppingCartPending = catchAsync( async (req, res, nex) => {
 
     // Validate if we have a shopping cart in PENDING state
-    const shoppingCartPending = await Cart.findOne({ status: 'PENDING' });
+    const shoppingCartPending = await Cart.findOne({ status: PENDING });
   
     if (shoppingCartPending && shoppingCartPending.products.length ) {
-        const newStatus = 'PAID';
+        const newStatus = PAID;
     
         // Update the shopping cart updating the status with PAID
         const shoppingCartUpdated =  await Cart.findByIdAndUpdate({ _id: shoppingCartPending._id }, { $set: {status: newStatus}}, { new: true });
@@ -77,7 +79,7 @@ exports.deleteProductsFromShoppingCart = catchAsync( async (req, res, nex) => {
     const { id } = req.params; // id of the product
 
     // Validate if we have a shopping cart in PENDING state
-    const shoppingCartPending = await Cart.findOne({ status: 'PENDING' });
+    const shoppingCartPending = await Cart.findOne({ status: PENDING });
   
     if (!shoppingCartPending) {
         return res.status(404).json({
@@ -87,23 +89,17 @@ exports.deleteProductsFromShoppingCart = catchAsync( async (req, res, nex) => {
     }
 
     // Finding the index if the product exist in the array of products
-    const indexproductFound =  shoppingCartPending.products.findIndex( (element) => {
-        return element['productId'] === id;
-    });
+    const indexproductFound =  shoppingCartPending.products.findIndex( element => element['_id'].toString() === id );
     
-    console.log(indexproductFound);
-
     if ( indexproductFound == -1) {
         return res.status(404).json({
             status: "NOT FOUND",
             message: "No product with the id found in shopping cart"
         });
     }
-
     // Removin the product of the array of prpducts
-    const newProducts = shoppingCartPending.products.splice(indexproductFound, 1);
+    shoppingCartPending.products.splice(indexproductFound, 1);
 
-    const newStatus = 'PAID';
     // Update the shopping cart updating the status with PAID
     const shoppingCartUpdated =  await Cart.findByIdAndUpdate({ _id: shoppingCartPending._id }, { $set: {products: shoppingCartPending.products}}, { new: true });
 

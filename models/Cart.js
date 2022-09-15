@@ -5,24 +5,27 @@ const User = require('./User');
 const cartSchema =  new mongoose.Schema({
     user: {
         type: {
+            _id: mongoose.Schema.Types.ObjectId,
             userName: String,
             email: String
         },
+        ref: 'User',
         required: true
     },
     status: {
         type: String,
         required: true,
     },
-    products: {
-        type : [{
-            productId: String,
+    products: [{
+        type: {
+            _id: mongoose.Schema.Types.ObjectId,
             price: Number,
             quanty: Number
-        }] ,
+        },
+        ref: 'Product',
         "default" : [],
         required: true
-    }
+    }]
 });
 
 const Cart = mongoose.model("Cart", cartSchema);
