@@ -5,13 +5,20 @@ const catchAsync = require("../utils/catchAsync");
 
 exports.getAllUsers = catchAsync(async (req, res) => {
   const users = await User.find();
+  const usersWithoutPassword = [];
+
+  users.forEach( (user) => {
+    let newUser = user.toObject();
+    delete newUser.password;
+    usersWithoutPassword.push(newUser);
+  }); 
 
   res.status(200).json({
     status: "success",
     timeOfRequest: req.requestTime,
     results: users.length,
     data: {
-      users,
+      users: usersWithoutPassword,
     },
   });
 });
@@ -35,7 +42,10 @@ exports.addUser = catchAsync(async (req, res) => {
 });
 
 exports.getUserById = catchAsync(async (req, res) => {
-  const foundUser = await User.findById(req.params.id);
+  let foundUser = await User.findById(req.params.id);
+  foundUser = foundUser.toObject();
+  delete foundUser.password;
+
   if (foundUser) {
     res.status(200).json({
       status: "success",
@@ -55,8 +65,10 @@ exports.updateUser = async (req, res) => {
   const userToUpdate = req.body;
   const { id } = req.params;
 
-  const userUpdated = await User.findByIdAndUpdate({ _id: id },  userToUpdate , { new: true });
-  
+  let userUpdated = await User.findByIdAndUpdate({ _id: id },  userToUpdate , { new: true });
+  userUpdated = userUpdated.toObject();
+  delete userUpdated.password;
+
   if (userUpdated) {
     return res.status(200).json({
       status: "PUT success",
@@ -75,7 +87,9 @@ exports.updateUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
   const { id } = req.params;
 
-  const userDeleted = await User.findByIdAndDelete({ _id: id });
+  let userDeleted = await User.findByIdAndDelete({ _id: id });
+  userDeleted = userDeleted.toObject();
+  delete userDeleted.password;
   
   if (userDeleted) {  
     return res.status(200).json({
