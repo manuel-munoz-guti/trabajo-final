@@ -40,3 +40,46 @@ exports.getProductById = catchAsync(async (req, res) => {
     });
   }
 });
+
+exports.updateProduct = catchAsync(async (req, res) => {
+
+  const productToUpdate = req.body;
+  const { id } = req.params;
+
+  const productUpdated = await Product.findByIdAndUpdate({ _id: id },  productToUpdate , { new: true });
+  
+  if (productUpdated) {
+    return res.status(200).json({
+      status: "PUT success",
+      data: {
+        product: productUpdated,
+      },
+    });
+  } else {
+    
+    return res.status(404).json({
+      status: "Not found",
+    });
+  }
+});
+
+
+exports.deleteProduct = catchAsync( async (req, res) => {
+  const { id } = req.params;
+
+  const productDeleted = await Product.findByIdAndDelete({ _id: id });
+  
+  if (productDeleted) {  
+    return res.status(200).json({
+      status: "DELETE success",
+      data: {
+        product: productDeleted,
+      },
+    });
+  } else {
+    
+    return res.status(404).json({
+      status: "Not found",
+    });
+  }
+});
